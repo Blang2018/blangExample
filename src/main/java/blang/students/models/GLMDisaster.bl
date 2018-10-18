@@ -1,0 +1,41 @@
+package blang.students.models
+
+/*
+ * Model from: https://docs.pymc.io/notebooks/getting_started.html
+ * TODO: We should make this reference more robust to potential documentation updates from PyMC3
+ * TODO: State modifications if appropriate
+ * TODO: Add data to /datasets in tidy format
+ * TODO: Use plate notation
+ */
+model Disaster{
+    param int[] counts ?: #[4, 5, 4, 0, 1, 4, 3, 4, 0, 6, 3, 3, 4, 0, 2, 6,
+                             3, 3, 5, 4, 5, 3, 1, 4, 4, 1, 5, 5, 3, 4, 2, 5,
+                             2, 2, 3, 4, 2, 1, 3, 2, 2, 1, 1, 1, 1, 3, 0, 0,
+                             1, 0, 1, 1, 0, 0, 3, 1, 0, 3, 2, 2, 0, 1, 1, 1,
+                             0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 1, 1, 0, 2,
+                             3, 3, 1, 1, 2, 1, 1, 1, 1, 2, 4, 2, 0, 0, 1, 4,
+                             0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
+    random RealVar earlyMean    ?: latentReal
+    random RealVar lateMean     ?: latentReal
+    random RealVar switchPoint  ?: latentReal
+
+    laws{
+        earlyMean   ~ Exponential(1)
+        lateMean    ~ Exponential(1)
+        switchPoint ~ ContinuousUniform(1851, 1961)
+
+        for (int year : 1851 ..< 1962){
+            counts.get(year-1851) | earlyMean, switchPoint, lateMean, year ~ Poisson(
+                {
+                    if (year > switchPoint){
+                        return lateMean
+                    } else {
+                        return earlyMean
+                    }
+                }
+            )
+        }
+
+
+    }
+}
