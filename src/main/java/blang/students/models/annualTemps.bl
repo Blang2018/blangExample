@@ -1,0 +1,34 @@
+package demo
+
+// 	HIDDEN MARKOV MODEL EXAMPLE (HMM)
+
+model annualTemps {
+	//Number of States for the Markov Process
+	param	int 				nLatentStates ?: 2 
+	
+	//Sequence of observations, fixing it solves HMM problem 2
+	random List<IntVar>		observations ?: fixedIntList(0,1,0,2)
+	//Sets length of the process to size of observations			
+ 	random List<IntVar>      states ?: latentIntList(observations.size)			
+	
+	//Initial Dist. Vector (notation: pi)
+  	param DenseSimplex           initialDistribution ?: fixedSimplex(0.6, 0.4)
+  	//Transition Matrix (notation A)
+  	param DenseTransitionMatrix  transitionProbabilities ?: fixedTransitionMatrix(#[#[0.7, 0.3], #[0.4, 0.6]])
+  	//Observation Matrix (notation: B)
+  	param DenseTransitionMatrix  emissionProbabilities ?: fixedTransitionMatrix(#[#[0.1, 0.4, 0.5], #[0.7, 0.2, 0.1]]) 
+
+  	laws {
+  		// Uses the Built-In Markov Chain module to generate the latent states of 
+  		//  the markov process.
+    		states | initialDistribution, transitionProbabilities
+      		~ MarkovChain(initialDistribution, transitionProbabilities)
+		
+		for (int obsIdx : 0 ..< observations.size) {
+			observations.get(obsIdx) |
+			emissionProbabilities, 
+			IntVar curIndic = states.get(obsIdx)
+			~ Categorical(emissionProbabilities.row(curIndic))
+		}
+	}
+}
