@@ -1,7 +1,6 @@
 package blang.students.models
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics
-import blang.students.models.HierRugbyFunctions.*
+import blang.students.models.RugbyFunctions
 
 /*
  * Model from: https://docs.pymc.io/notebooks/rugby_analytics.html
@@ -33,12 +32,8 @@ model HierarchicalRugby{
             
 
     laws {
-        // PyMC3 documentation used Flat
-        intercept   ~ ContinuousUniform(-10, 10)
-        home        ~ ContinuousUniform(-10, 10)
-        // PyMC3 documentation used HalfStudentT(nu=3, sd=2.5)
-        sd_atk ~ Exponential(3)
-        sd_def ~ Exponential(3)
+        sd_atk ~ HalfStudentT(3, 2.5)
+        sd_def ~ HalfStudentT(3, 2.5)
 
         // _stars ~ N(0, sd_)
         for (int i : 0 ..< nTeams) {
@@ -47,6 +42,7 @@ model HierarchicalRugby{
             defs_star.get(i) | sd_def
                 ~ Normal(0, sd_def)
         }
+
         // Iterating over observations: score | parameters ~ Poisson(f(parameters)) for some function f. 
         for (Index<String> match_id: match.indices){
             home_score.get(match_id) | IntVar i_a = i_away.get(match_id),
@@ -55,47 +51,14 @@ model HierarchicalRugby{
                                        defs_star,
                                        intercept,
                                        home
-                                       ~ Poisson(
-                                           {
-
-                                               val double result = Math.exp(atks_star.get(i_h)
-                                                   + defs_star.get(i_a)
-                                                   - HierRugbyFunctions.Mean(atks_star)
-                                                   - HierRugbyFunctions.Mean(defs_star)
-                                                   + intercept
-                                                   + home
-                                               )
-                                               if (result == 0)
-                                                 Generators::ZERO_PLUS_EPS
-                                               else if (result == Double::POSITIVE_INFINITY)
-                                                 Double::MAX_VALUE
-                                               else
-                                                 result                                                  
-                                           }
-                                       )
+                                       ~ Poisson(RugbyFunctions.computeTheta(atks_star, defs_star, i_h, i_a, intercept, home))
             away_score.get(match_id) | IntVar i_a = i_away.get(match_id),
                                        IntVar i_h = i_home.get(match_id),
                                        atks_star,
                                        defs_star,
                                        intercept
-                                       ~ Poisson(
-                                           {
-                                               val double result = Math.exp(atks_star.get(i_a)
-                                                   + defs_star.get(i_h)
-                                                   - HierRugbyFunctions.Mean(atks_star)
-                                                   - HierRugbyFunctions.Mean(defs_star)
-                                                   + intercept
-                                               )
-                                               if (result == 0)
-                                                 Generators::ZERO_PLUS_EPS
-                                               else if (result == Double::POSITIVE_INFINITY)
-                                                 Double::MAX_VALUE
-                                               else
-                                                 result                                                  
-                                           })
-
-
-            }
+                                       ~ Poisson(RugbyFunctions.computeTheta(atks_star, defs_star, i_a, i_h, intercept, 0))
         }
     }
+}
 
