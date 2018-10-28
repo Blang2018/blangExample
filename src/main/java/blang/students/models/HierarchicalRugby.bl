@@ -1,6 +1,7 @@
 package blang.students.models
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import blang.students.models.HierRugbyFunctions.*
 
 /*
  * Model from: https://docs.pymc.io/notebooks/rugby_analytics.html
@@ -9,6 +10,8 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics
  */
  
 model HierarchicalRugby{
+    
+        
     param GlobalDataSource data
     param Plate<String> match
     param Plated<Integer> i_home
@@ -27,6 +30,7 @@ model HierarchicalRugby{
     random List<RealVar> 
             atks_star  ?: latentRealList(nTeams),
             defs_star  ?: latentRealList(nTeams)
+            
 
     laws {
         // PyMC3 documentation used Flat
@@ -53,16 +57,14 @@ model HierarchicalRugby{
                                        home
                                        ~ Poisson(
                                            {
-                                               val SummaryStatistics atks = new SummaryStatistics()
-                                               for (atk : atks_star){
-                                                   atks.addValue(atk)
-                                               }
-                                               val SummaryStatistics defs = new SummaryStatistics()
-                                               for (def : defs_star){
-                                                   defs.addValue(def)
-                                               }
-                                               val double mean = atks.getMean() + defs.getMean()
-                                               val double result = Math.exp(atks_star.get(i_h) + defs_star.get(i_a) - mean + intercept + home)
+
+                                               val double result = Math.exp(atks_star.get(i_h)
+                                                   + defs_star.get(i_a)
+                                                   - HierRugbyFunctions.Mean(atks_star)
+                                                   - HierRugbyFunctions.Mean(defs_star)
+                                                   + intercept
+                                                   + home
+                                               )
                                                if (result == 0)
                                                  Generators::ZERO_PLUS_EPS
                                                else if (result == Double::POSITIVE_INFINITY)
@@ -78,16 +80,12 @@ model HierarchicalRugby{
                                        intercept
                                        ~ Poisson(
                                            {
-                                               val SummaryStatistics atks = new SummaryStatistics()
-                                               for (atk : atks_star){
-                                                   atks.addValue(atk)
-                                               }
-                                               val SummaryStatistics defs = new SummaryStatistics()
-                                               for (def : defs_star){
-                                                   defs.addValue(def)
-                                               }
-                                               val double mean = atks.getMean() + defs.getMean()
-                                               val double result = Math.exp(atks_star.get(i_a) + defs_star.get(i_h) - mean + intercept)
+                                               val double result = Math.exp(atks_star.get(i_a)
+                                                   + defs_star.get(i_h)
+                                                   - HierRugbyFunctions.Mean(atks_star)
+                                                   - HierRugbyFunctions.Mean(defs_star)
+                                                   + intercept
+                                               )
                                                if (result == 0)
                                                  Generators::ZERO_PLUS_EPS
                                                else if (result == Double::POSITIVE_INFINITY)
