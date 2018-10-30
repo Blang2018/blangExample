@@ -1,6 +1,6 @@
 package blang.students.models
 
-import blang.students.models.RugbyFunctions
+import blang.students.models.RugbyFn
 
 /*
  * Model from: https://docs.pymc.io/notebooks/rugby_analytics.html
@@ -44,20 +44,20 @@ model HierarchicalRugby{
         }
 
         // Iterating over observations: score | parameters ~ Poisson(f(parameters)) for some function f. 
-        for (Index<String> match_id: match.indices){
+        for (Index<String> match_id: match.indices) {
             home_score.get(match_id) | IntVar i_a = i_away.get(match_id),
                                        IntVar i_h = i_home.get(match_id),
                                        atks_star,
                                        defs_star,
                                        intercept,
                                        home
-                                       ~ Poisson(RugbyFunctions.computeTheta(atks_star, defs_star, i_h, i_a, intercept, home))
+                                       ~ Poisson(RugbyFn.computeTheta(atks_star, defs_star, i_h, i_a, intercept, home))
             away_score.get(match_id) | IntVar i_a = i_away.get(match_id),
                                        IntVar i_h = i_home.get(match_id),
                                        atks_star,
                                        defs_star,
                                        intercept
-                                       ~ Poisson(RugbyFunctions.computeTheta(atks_star, defs_star, i_a, i_h, intercept, 0))
+                                       ~ Poisson(RugbyFn.computeTheta(atks_star, defs_star, i_a, i_h, intercept, 0))
         }
     }
 }
