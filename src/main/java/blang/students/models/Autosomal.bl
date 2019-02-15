@@ -1,0 +1,38 @@
+package blang.students.models
+
+model Autosomal{
+  random IntVar genotype ?: latentInt
+  param IntVar mother, father ?: latentInt
+
+  laws {
+   logf(genotype, mother, father){
+     // special case for both parents == AB
+     if ((3 * mother + father) == 5) return log(((genotype % 2) + 1.0)/4.0)
+     // otherwise probabilities follow this pattern
+     val int diff = 2 * (2 - (mother + father))  
+     var double p
+     switch p {
+       case genotype == 0 : p = if (diff > 0) return log(diff/4.0) else NEGATIVE_INFINITY
+       case genotype == 2 : p = if (-diff > 0) return log(-diff/4.0) else NEGATIVE_INFINITY
+       default : return log(4.0 - abs(diff))
+     }
+   }
+  }
+  generate (rand){
+    // special case for both parents == AB
+    if ((3 * mother + father) == 5) {
+      val double p0 = 0.25
+      val double p2 = 0.25
+      val double p1 = 0.5
+      return Generators::categorical(rand, #[p0, p1, p2])
+    } else {
+      // otherwise probabilities follow this pattern
+      val int diff = 2 * (2-(mother + father))
+      val double p0 = if (diff > 0) diff/4.0 else 0.0
+      val double p2 = if (-diff > 0) -diff/4.0 else 0.0
+      val double p1 = 1.0 - abs(diff)/4.0
+      return Generators::categorical(rand, #[p0, p1, p2])
+    }
+   }
+}
+

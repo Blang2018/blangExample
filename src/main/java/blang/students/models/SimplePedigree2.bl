@@ -1,0 +1,64 @@
+package blang.students.models
+/*
+ * Reference paper:
+ * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1682495/
+ * Based on example from Figure 4 (or model 1 of Table 2)
+ */
+model SimplePedigree2{
+  param GlobalDataSource data
+  param Plate<Integer> id
+  param IntVar n ?: id.indices().size()
+  param Plated<IntVar> par1, par2, gender, disease
+  param DenseMatrix initWeights ?: fixedVector(1,1,1)
+
+  random DenseSimplex piFounders ?: latentSimplex(3)
+  random List<RealVar> tao ?: latentRealList(3)
+  random Plated<IntVar> genotype, al1, al2
+  
+  laws{
+
+    /* 
+     * P(Disease | Genotype)
+     */   
+
+    // Likelihood for tao
+    for (Index<Integer> i : id.indices().filter[i | genotype.get(i) == 1 || genotype.get(i) == 0]) {
+      disease.get(i) | RealVar t = tao.get(genotype.get(i)) ~ Bernoulli(t)
+    } 
+
+    for (Index<Integer> i : id.indices().filter[i | genotype.get(i) == 2]) {
+      disease.get(i) | RealVar t = tao.get(genotype.get(i)) ~ LogPotential(NEGATIVE_INFINITY)
+    } 
+
+
+    /*
+     * P(Genotype | GenotypeMother, GenotypeFather)
+     */
+    
+    // Prior for piFounders
+    piFounders | initWeights ~ Dirichlet(initWeights)
+    
+    // Likelihood for piFounders
+    for (Index<Integer> i : id.indices().filter[i | par1.get(i) == -1 || par2.get(i) == -1]) {
+      genotype.get(i) | piFounders ~ Categorical(piFounders)
+    }
+
+    // Likelihood for distribution of pedigree members
+    for (Index<Integer> i : id.indices().filter[i | par1.get(i) >= 0 && par2.get(i) >= 0]) {
+      genotype.get(i) | DenseSimplex p = {
+                          val h0 = al1.get(id.index(par1.get(i)))
+                          val h1 = al2.get(id.index(par1.get(i)))
+                          val h2 = al1.get(id.index(par2.get(i)))
+                          val h3 = al2.get(id.index(par2.get(i)))
+                          var Double[] p = #[0.0,0.0,0.0]
+                          p.set(h0 + h2, p.get(h0+h2) + 1.0)
+                          p.set(h0 + h3, p.get(h0+h3) + 1.0)
+                          p.set(h1 + h2, p.get(h1+h2) + 1.0)
+                          p.set(h1 + h3, p.get(h1+h3) + 1.0)
+                          return fixedSimplex(#[p.get(0)/4.0, p.get(1)/4.0, p.get(2)/4.0])                          
+                        }
+                        ~ Categorical(p)
+    }
+
+  }
+}
