@@ -1,0 +1,42 @@
+package blang.students.models
+
+import blang.students.models.StickBreaking
+
+model ToyClustering{
+
+  param GlobalDataSource data
+  param Plate<Integer> idx
+  param Plated<RealVar> obs
+
+  // for toy example
+  // this k is large enough for 1e^-6 err in simplex requirement
+  param IntVar k ?: 30
+  param RealVar alpha ?: 1.0
+  
+  random Plated<IntVar> cluster 
+  random List<RealVar> means ?: latentRealList(k)
+  random List<RealVar> b ?: latentRealList(k)
+  
+  laws {
+    
+    for (int i : 0 ..< k) {
+      // Prior: mu ~ Normal(0, 10)
+      means.get(i) ~ Normal(0, 10)
+      // Prior: b ~ Beta(1.0, alpha)
+      b.get(i) | alpha ~ Beta(1.0, alpha)
+    }
+    
+    for (Index<Integer> i : idx.indices()) {
+      // Prior: Zi | pi ~ Categorical(pi)
+      cluster.get(i) | b ~ Categorical(fixedSimplex(StickBreaking.BreakStick(b)))
+//      cluster.get(i) | DenseSimplex pi = fixedSimplex(StickBreaking.BreakStick(b)) ~ Categorical(pi)
+    }
+    
+    for (Index<Integer> i : idx.indices()) {
+      // xi | zi, mu ~ Normal(mu_zi, 1.0)
+      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 1.0)
+    }
+    
+
+  }
+}
