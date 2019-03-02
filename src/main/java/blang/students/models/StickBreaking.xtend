@@ -20,6 +20,8 @@ class StickBreaking {
       for (int i : 0 ..< k) { bc.add(i, 1.0 - b.get(i).doubleValue) }
       for (int i : 1 ..< k) {
         pi.add(i,
+          // More efficient way to compute:
+          // pi_k = b_k * PRODUCT{bc_l} (for l = 1, ..., k-1)
           Math.exp(
             Math.log(pi.get(i-1))
           - Math.log(b.get(i-1).doubleValue)

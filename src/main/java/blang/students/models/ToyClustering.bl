@@ -8,8 +8,7 @@ model ToyClustering{
   param Plate<Integer> idx
   param Plated<RealVar> obs
 
-  // for toy example
-  // this k is large enough for 1e^-6 err in simplex requirement
+  // toy example with k that is large enough for 1e^-6 err in simplex requirement
   param IntVar k ?: 30
   param RealVar alpha ?: 1.0
   
