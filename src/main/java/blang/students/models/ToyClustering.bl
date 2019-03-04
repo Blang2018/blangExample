@@ -9,18 +9,18 @@ model ToyClustering{
   param Plated<RealVar> obs
 
   // toy example with k that is large enough for 1e^-6 err in simplex requirement
-  param IntVar k ?: 30
+  param IntVar k ?: 35
   param RealVar alpha ?: 1.0
   
+  random List<RealVar> b ?: latentRealList(k)
   random Plated<IntVar> cluster 
   random List<RealVar> means ?: latentRealList(k)
-  random List<RealVar> b ?: latentRealList(k)
   
   laws {
     
     for (int i : 0 ..< k) {
-      // Prior: mu ~ Normal(0, 10)
-      means.get(i) ~ Normal(0, 10)
+      // Prior: mu ~ Normal(0, 15)
+      means.get(i) ~ Normal(0, 15)
       // Prior: b ~ Beta(1.0, alpha)
       b.get(i) | alpha ~ Beta(1.0, alpha)
     }
@@ -33,7 +33,7 @@ model ToyClustering{
     
     for (Index<Integer> i : idx.indices()) {
       // xi | zi, mu ~ Normal(mu_zi, 1.0)
-      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 1.0)
+      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 0.03)
     }
     
 
