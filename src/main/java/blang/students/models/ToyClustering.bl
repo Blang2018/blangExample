@@ -17,25 +17,16 @@ model ToyClustering{
   random List<RealVar> means ?: latentRealList(k)
   
   laws {
-    
     for (int i : 0 ..< k) {
-      // Prior: mu ~ Normal(0, 15)
-      means.get(i) ~ Normal(0, 15)
-      // Prior: b ~ Beta(1.0, alpha)
+//      means.get(i) ~ Normal(0, 10)
       b.get(i) | alpha ~ Beta(1.0, alpha)
     }
-    
     for (Index<Integer> i : idx.indices()) {
-      // Prior: Zi | pi ~ Categorical(pi)
-      cluster.get(i) | b ~ Categorical(fixedSimplex(StickBreaking.BreakStick(b)))
+      cluster.get(i) | b ~ Categorical(StickBreaking.BreakStick(b))
 //      cluster.get(i) | DenseSimplex pi = fixedSimplex(StickBreaking.BreakStick(b)) ~ Categorical(pi)
     }
-    
     for (Index<Integer> i : idx.indices()) {
-      // xi | zi, mu ~ Normal(mu_zi, 1.0)
-      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 0.03)
+      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 1.0)
     }
-    
-
   }
 }
