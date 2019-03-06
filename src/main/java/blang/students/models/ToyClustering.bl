@@ -6,27 +6,29 @@ model ToyClustering{
 
   param GlobalDataSource data
   param Plate<Integer> idx
-  param Plated<RealVar> obs
-
-  // toy example with k that is large enough for 1e^-6 err in simplex requirement
-  param IntVar k ?: 35
-  param RealVar alpha ?: 1.0
+  param Integer k ?: 50
   
-  random List<RealVar> b ?: latentRealList(k)
+  random Plated<RealVar> obs
   random Plated<IntVar> cluster 
+  random RealVar alpha ?: latentReal
+  random List<RealVar> b ?: latentRealList(k)
   random List<RealVar> means ?: latentRealList(k)
   
   laws {
+    
+    // For dp.csv
+    
+    alpha ~ Exponential(0.5)
+
     for (int i : 0 ..< k) {
-//      means.get(i) ~ Normal(0, 10)
       b.get(i) | alpha ~ Beta(1.0, alpha)
+      means.get(i) ~ Normal(0, 20.0)
     }
+    
     for (Index<Integer> i : idx.indices()) {
-      cluster.get(i) | b ~ Categorical(StickBreaking.BreakStick(b))
-//      cluster.get(i) | DenseSimplex pi = fixedSimplex(StickBreaking.BreakStick(b)) ~ Categorical(pi)
+      cluster.get(i) | b ~ Categorical(StickBreaking.Gem(b))
+      obs.get(i) | IntVar c = cluster.get(i), means ~ Normal(means.get(c), 1.0)
     }
-    for (Index<Integer> i : idx.indices()) {
-      obs.get(i) | RealVar mu = means.get(cluster.get(i)) ~ Normal(mu, 1.0)
-    }
+
   }
 }
