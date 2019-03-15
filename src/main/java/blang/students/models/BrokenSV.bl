@@ -22,7 +22,7 @@ model BrokenSV {
         }
 
         for (int i : 0 ..< n) {
-            change.get(date.indices.get(i)) | RealVar v = s.get(i) ~ Normal(0, 1+exp(v*4))
+            change.get(date.indices.get(i)) | RealVar v = s.get(i) ~ Normal(0, exp(v*4))
         }
 
     }

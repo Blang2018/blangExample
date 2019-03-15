@@ -16,7 +16,7 @@ model ToyClustering{
   
   laws {
     
-    // For dp.csv
+    // For dp_full_data.csv
     
     alpha ~ Exponential(1.0/1.7)
 
