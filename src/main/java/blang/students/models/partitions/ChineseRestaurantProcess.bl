@@ -1,0 +1,40 @@
+package blang.students.models.partitions
+
+model ChineseRestaurantProcess {
+  
+  random Partition partition
+  param RealVar alpha 
+  
+  laws {
+    logf(partition, alpha){
+      if (alpha <= 0){
+        return NEGATIVE_INFINITY
+      } 
+      // initialize counts of elements in a partition
+      var List<Integer> counts = new ArrayList<Integer>(Collections.nCopies(partition.nElements, 0))
+      var double logProbability = 0.0
+      var int subset
+      var int c
+      for (int i : 0 ..< partition.nElements){
+        subset = partition.assignments.get(i)
+        c = counts.get(subset)
+        // If new table
+        if (c == 0) {
+          logProbability += log(alpha)
+          counts.set(subset, 1)
+        } 
+        // else go to existing table
+        else {
+          logProbability += log(c)
+          counts.set(subset, c + 1)
+        }
+        // denominator
+        logProbability -= log(i+alpha)
+      }
+      return logProbability
+    }
+  } // laws
+  generate(rand){
+    partition.setAssignment(CRPForwardSimulation.crp(rand, alpha, partition.nElements).getAssignments())
+  }
+} // model

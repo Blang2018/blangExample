@@ -1,0 +1,28 @@
+package blang.students.models.partitions
+
+model ToyClustering2 {
+  
+  param GlobalDataSource data
+  param Plate<Integer> idx
+
+  random Plated<RealVar> obs
+  random RealVar alpha ?: latentReal()
+  random Partition p ?: new Partition(idx.indices.size)
+  random List<RealVar> means ?: latentRealList(idx.indices.size)
+  
+  laws{
+    
+    alpha ~ Exponential(0.1)
+    
+    for (int i : 0 ..< means.size()){
+      means.get(i) ~ Normal(0, 900.0)
+    }
+    
+    p | alpha ~ ChineseRestaurantProcess(alpha)
+    
+    for (Index<Integer> i : idx.indices()) {
+      obs.get(i) | p, means, i ~ Normal(means.get(p.assignments.get(i.key)), 0.1)
+    }
+    
+  }
+}

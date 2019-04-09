@@ -14,11 +14,14 @@ class StickBreaking {
 
       val k = b.size;
       
-      // Cases for out-of-support betas : return uniformSimplex
-      if ((b.get(0).doubleValue == 0.0 && b.get(1).doubleValue == 0.0) 
-        || b.get(0).doubleValue > 1.0 || b.get(0).doubleValue < 0.0 ) {
+      // Cases for initialization at 0: return uniformSimplex
+      if ((b.get(0).doubleValue == 0.0 && b.get(1).doubleValue == 0.0)) {
         val uniformSimplex = StaticUtils.fixedSimplex(MatrixOperations.ones(k)/k)
         return uniformSimplex
+      }
+      // Cases for out-of-support betas : return uniformSimplex
+      if (b.get(0).doubleValue > 1.0 || b.get(0).doubleValue < 0.0 ) {
+        StaticUtils.invalidParameter()
       }
 
       // log b and b's complement and
